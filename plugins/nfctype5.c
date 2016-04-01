@@ -697,7 +697,11 @@ static int t5_read_meta_resp(struct near_tag *tag, int err, void *data)
 		else
 			near_tag_set_ro(tag, FALSE);
 
-		rmb_supported = t5_cc->cc3 & TYPE5_CC3_MBREAD_FLAG;
+		/* Ignore multi block read for ST tags even if set */
+		if(!(t5_manufacturer_stmicro(tag)))
+			rmb_supported = t5_cc->cc3 & TYPE5_CC3_MBREAD_FLAG;
+		else
+			rmb_supported = 0;
 
 		g_free(cookie->buf);
 
