@@ -38,10 +38,14 @@ static struct {
 	bool constant_poll;
 	bool default_powered;
 	bool reset_on_error;
+	bool st_type4a_tag;
+	bool st_cr95hf;
 } near_settings  = {
 	.constant_poll = FALSE,
 	.default_powered = FALSE,
 	.reset_on_error = TRUE,
+	.st_type4a_tag	= TRUE,
+	.st_cr95hf	= TRUE,
 };
 
 static GKeyFile *load_config(const char *file)
@@ -63,7 +67,6 @@ static GKeyFile *load_config(const char *file)
 		g_key_file_free(keyfile);
 		return NULL;
 	}
-
 	return keyfile;
 }
 
@@ -91,6 +94,16 @@ static void parse_config(GKeyFile *config)
 						"ResetOnError", &error);
 	if (!error)
 		near_settings.reset_on_error = boolean;
+
+	boolean = g_key_file_get_boolean(config, "General",
+						"STType4ATagM24SR", &error);
+	if (!error)
+		near_settings.st_type4a_tag = boolean;
+
+	boolean = g_key_file_get_boolean(config, "General",
+						"STCR95HF", &error);
+	if (!error)
+		near_settings.st_cr95hf = boolean;
 
 	g_clear_error(&error);
 }
@@ -217,6 +230,12 @@ bool near_setting_get_bool(const char *key)
 
 	if (g_str_equal(key, "ResetOnError"))
 		return near_settings.reset_on_error;
+
+	if (g_str_equal(key, "STType4ATagM24SR"))
+		return near_settings.st_type4a_tag;
+
+	if (g_str_equal(key, "STCR95HF"))
+		return near_settings.st_cr95hf;
 
 	return false;
 }

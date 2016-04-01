@@ -439,6 +439,7 @@ static int t4_select_NDEF_ID(uint8_t *resp, int length, void *data)
 static int t4_readbin_cc(uint8_t *resp, int length, void *data)
 {
 	struct t4_cookie *cookie = data;
+	bool st_cr95hf;
 	struct type4_cc *read_cc = (struct type4_cc *)&resp[1];
 
 	DBG("%d", length);
@@ -457,6 +458,12 @@ static int t4_readbin_cc(uint8_t *resp, int length, void *data)
 			APDU_HEADER_LEN;
 	cookie->c_apdu_max_size = g_ntohs(read_cc->max_C_apdu_data_size);
 	cookie->max_ndef_size = g_ntohs(read_cc->tlv_fc.max_ndef_size);
+
+	/* Work around for CR95HF as it does not support long frame */
+	st_cr95hf = near_setting_get_bool("STCR95HF");
+	if(st_cr95hf){
+		cookie->r_apdu_max_size = 246;
+	}
 
 	near_tag_set_max_ndef_size(cookie->tag, cookie->max_ndef_size);
 	near_tag_set_c_apdu_max_size(cookie->tag, cookie->c_apdu_max_size);
@@ -575,6 +582,7 @@ static int nfctype4_read(uint32_t adapter_idx,
 		uint32_t target_idx, near_tag_io_cb cb)
 {
 	struct t4_cookie *cookie;
+	bool  stm24sr_tag;
 
 	DBG("");
 
@@ -598,11 +606,18 @@ static int nfctype4_read(uint32_t adapter_idx,
 	 * complete NDEF detection procedure.  If near_tag_get_r_apdu_max_size()
 	 * returns anything other than 0, we know the NDEF file is selected.
 	 */
-	if (near_tag_get_r_apdu_max_size(cookie->tag))
-		return t4_get_file_len(cookie);
-	else
+	/* Workaround for ST Type4A tag M24SR, skipping the above optimization */
+	stm24sr_tag = near_setting_get_bool("STType4ATagM24SR");
+	if(stm24sr_tag){
 		return ISO_Select(iso_appname_v2, ARRAY_SIZE(iso_appname_v2),
-				0x4, t4_select_file_by_name_v2, cookie);
+				  0x4, t4_select_file_by_name_v2, cookie);
+	} else {
+		if (near_tag_get_r_apdu_max_size(cookie->tag))
+			return t4_get_file_len(cookie);
+		else
+			return ISO_Select(iso_appname_v2, ARRAY_SIZE(iso_appname_v2),
+					0x4, t4_select_file_by_name_v2, cookie);
+	}
 }
 
 static int data_write_cb(uint8_t *resp, int length, void *data)
