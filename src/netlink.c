@@ -474,7 +474,7 @@ static int get_targets_handler(struct nl_msg *n, void *arg)
 
 	if (attrs[NFC_ATTR_TARGET_SEL_RES])
 		sel_res =
-			nla_get_u16(attrs[NFC_ATTR_TARGET_SEL_RES]);
+			nla_get_u8(attrs[NFC_ATTR_TARGET_SEL_RES]);
 
 	if (attrs[NFC_ATTR_TARGET_NFCID1]) {
 		nfcid_len = nla_len(attrs[NFC_ATTR_TARGET_NFCID1]);
