@@ -4,7 +4,15 @@ if [ -f config.status ]; then
 	make maintainer-clean
 fi
 
+GCCVER=$(gcc --version | grep ^gcc | awk '{print $3}' | sed 's/[.].*//g')
+
+if [ $GCCVER -gt 4 ]
+then
+	CFLAGS="-Wno-implicit-function-declaration"
+fi
+
 ./bootstrap && \
+	CFLAGS=$CFLAGS \
     ./configure --enable-maintainer-mode \
 		--enable-debug \
 		--disable-systemd \

@@ -14,12 +14,7 @@ endif
 	dh $@ --with python2
 
 override_dh_auto_configure:
-	CFLAGS="-Wno-error=implicit-function-declaration" ./configure $(confflags) \
-		--prefix=/usr \
-		--sysconfdir=/etc \
-		--enable-tools \
-		--enable-maintainer-mode \
-		--enable-debug
+	./bootstrap-configure
 
 override_dh_auto_install:
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp libexecdir=/usr/lib/neard/ install
