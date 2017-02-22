@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+
+export DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+export DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+	confflags += --build $(DEB_HOST_GNU_TYPE)
+else
+	confflags += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
+
+%:
+	dh $@ --with python2
+
+override_dh_auto_configure:
+	CFLAGS="-Wno-error=implicit-function-declaration" ./configure $(confflags) \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-tools \
+		--enable-maintainer-mode \
+		--enable-debug
+
+override_dh_auto_install:
+	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp libexecdir=/usr/lib/neard/ install
+
+override_dh_python2:
+	dh_python2 /usr/lib/neard/tools/
